@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nileshkumar Raghuvanshi · Embedded Linux Engineer</title>
+<meta name="description" content="Embedded Linux engineer with 14 years in kernel drivers, board bring-up and BSP work, the last 5 on camera and ISP pipelines for an edge-AI SoC.">
+<meta property="og:title" content="Nileshkumar Raghuvanshi · Embedded Linux Engineer">
+<meta property="og:description" content="Camera / ISP drivers · Board bring-up · BSP. 14 years in embedded Linux.">
+<meta property="og:type" content="profile">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f6e6e'/%3E%3Ctext x='32' y='42' font-family='Arial' font-size='26' font-weight='700' fill='white' text-anchor='middle'%3ENR%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --text: #1c1f23;
+    --muted: #5b636d;
+    --line: #e3e5e8;
+    --accent: #0f6e6e;
+    --accent-soft: #e3f1f1;
+    --chip: #f0f2f4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111416;
+      --surface: #181c1f;
+      --text: #e8eaed;
+      --muted: #9aa3ad;
+      --line: #2a3035;
+      --accent: #4fc1bf;
+      --accent-soft: #16302f;
+      --chip: #22282c;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+
+  /* Header */
+  header.hero { padding: 72px 0 40px; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 2.8rem); line-height: 1.15; margin: 0 0 8px; letter-spacing: -0.02em; }
+  .hero .role { font-size: 1.15rem; color: var(--accent); font-weight: 600; margin: 0 0 6px; }
+  .hero .loc { color: var(--muted); margin: 0 0 24px; }
+  .contact { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 16px; border-radius: 8px; font-weight: 600; font-size: 0.95rem;
+    border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  }
+  .btn:hover { text-decoration: none; border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  @media (prefers-color-scheme: dark) { .btn.primary { color: #0b1a1a; } }
+  .btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 8px 0 0; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .stat b { display: block; font-size: 1.6rem; line-height: 1.2; color: var(--accent); }
+  .stat span { font-size: 0.85rem; line-height: 1.35; color: var(--muted); display: block; margin-top: 4px; }
+
+  /* Sections */
+  section { padding: 36px 0; border-top: 1px solid var(--line); }
+  section:first-of-type { border-top: 0; }
+  h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 0 0 20px; }
+  .summary p { font-size: 1.08rem; margin: 0; }
+
+  /* Experience */
+  .job { position: relative; padding-left: 22px; margin-bottom: 32px; }
+  .job:last-child { margin-bottom: 0; }
+  .job::before { content: ""; position: absolute; left: 0; top: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+  .job::after { content: ""; position: absolute; left: 4px; top: 22px; bottom: -28px; width: 1px; background: var(--line); }
+  .job:last-child::after { display: none; }
+  .job-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .job h3 { margin: 0; font-size: 1.1rem; }
+  .job .co { color: var(--accent); font-weight: 600; }
+  .job .dates { color: var(--muted); font-size: 0.92rem; white-space: nowrap; }
+  .job .focus { color: var(--muted); margin: 2px 0 10px; font-style: italic; }
+  .job ul { margin: 0; padding-left: 18px; }
+  .job li { margin-bottom: 6px; }
+
+  /* Skills */
+  .skills { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  .skill-row { display: grid; grid-template-columns: 170px 1fr; gap: 12px; align-items: start; }
+  .skill-row h3 { margin: 4px 0 0; font-size: 0.95rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { background: var(--chip); border-radius: 6px; padding: 3px 10px; font-size: 0.88rem; }
+  .chip.hl { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+  /* Education */
+  .edu { display: grid; gap: 12px; }
+  .edu-item { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .edu-item b { display: block; }
+  .edu-item span { color: var(--muted); }
+
+  footer { padding: 32px 0 48px; color: var(--muted); font-size: 0.88rem; border-top: 1px solid var(--line); }
+
+  @media (max-width: 640px) {
+    header.hero { padding: 48px 0 28px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .skill-row { grid-template-columns: 1fr; gap: 6px; }
+  }
+  @media print {
+    body { background: #fff; color: #000; }
+    .contact .btn { border: 0; padding: 0; }
+    section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>Nileshkumar Raghuvanshi</h1>
+  <p class="role">Embedded Linux Engineer · Camera / ISP Drivers · Board Bring-up · BSP</p>
+  <p class="loc">Bangalore, India</p>
+  <div class="contact">
+    <a class="btn primary" href="mailto:raghuvanshi.nileshkumar@yahoo.in">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5h20v14H2V5zm2 2v.5l8 5 8-5V7H4zm16 2.8-8 5-8-5V17h16V9.8z"/></svg>
+      Email me
+    </a>
+    <a class="btn" href="https://www.linkedin.com/in/nileshkumar-raghuvanshi" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.5h4V21H3V9.5zm7 0h3.8v1.6h.06c.53-1 1.83-2.06 3.77-2.06 4.03 0 4.77 2.65 4.77 6.1V21h-4v-5.2c0-1.24-.02-2.84-1.73-2.84-1.73 0-2 1.35-2 2.75V21h-4V9.5z"/></svg>
+      LinkedIn
+    </a>
+    <a class="btn" href="https://github.com/NileshkumarRaghuvanshi" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>
+      GitHub
+    </a>
+  </div>
+</header>
+
+<section aria-label="Highlights">
+  <div class="stats">
+    <div class="stat"><b>14 yrs</b><span>Embedded Linux</span></div>
+    <div class="stat"><b>4</b><span>Image sensors brought up</span></div>
+    <div class="stat"><b>2 wks</b><span>First silicon to streaming video</span></div>
+    <div class="stat"><b>120 fps</b><span>Per-camera capture</span></div>
+  </div>
+</section>
+
+<section class="summary" id="about">
+  <h2>About</h2>
+  <p>Embedded Linux engineer with 14 years in kernel drivers, board bring-up and BSP work, the last 5 on camera and vision pipelines for an edge-AI SoC. At SiMa.ai I led board bring-up of the Modalix SoC in U-Boot (DDR training, secure boot), led first-silicon bring-up of the ARM Mali-C71AE ISP and Synopsys MIPI CSI-2 receiver, and brought up 4 image sensors (Sony IMX477, IMX568, onsemi AR0234, OmniVision OG05C10) through V4L2 to GStreamer ML pipelines. Earlier work spans Linux network drivers and L2/L3 multicast at Cisco, I2C and power-management firmware at HPE, and automotive infotainment at Harman.</p>
+</section>
+
+<section id="experience">
+  <h2>Experience</h2>
+
+  <div class="job">
+    <div class="job-head">
+      <h3>Member of Technical Staff · <span class="co">SiMa.ai</span></h3>
+      <span class="dates">Nov 2021 – Present</span>
+    </div>
+    <p class="focus">Camera, ISP and SoC bring-up for an edge machine-learning SoC (Modalix)</p>
+    <ul>
+      <li>Led board bring-up of the Modalix SoC in U-Boot, including DDR controller programming and DDR training, and added support for multiple DDR parts in both single-rank and dual-rank configurations.</li>
+      <li>Enabled secure boot for Modalix in U-Boot, establishing a verified boot chain from boot ROM to the Linux kernel.</li>
+      <li>Led driver bring-up and post-silicon IP validation of the ARM Mali-C71AE ISP and Synopsys MIPI CSI-2 receiver, taking first silicon to streaming video in 2 weeks.</li>
+      <li>Wrote and integrated V4L2 sensor drivers for Sony IMX477, IMX568, onsemi AR0234 and OmniVision OG05C10 over MIPI CSI-2, capturing at up to 120 fps per camera.</li>
+      <li>Enabled the camera drivers and ISP in the Modalix BSP and delivered it to 3 external camera tuning companies, who used it to tune sensors for customer platforms.</li>
+      <li>Designed A/B software update with rollback for the Debian-based Modalix system, so a failed update boots back to the last good image.</li>
+      <li>Enabled Docker on Modalix by configuring the Linux kernel for container support (namespaces, cgroups, overlay filesystem, netfilter).</li>
+      <li>Created the Debian-based build system for Modalix and maintained the Yocto BSP layers, used company-wide and by customers.</li>
+      <li>Brought up remote DSP and ML-accelerator cores with OpenAMP (remoteproc / RPMsg), enabling Linux on the application cores to load and control them.</li>
+      <li>Built and optimized GStreamer camera-to-inference pipelines feeding the ML accelerator.</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-head">
+      <h3>Software Engineer IV · <span class="co">Cisco Systems</span></h3>
+      <span class="dates">Aug 2017 – Nov 2021</span>
+    </div>
+    <p class="focus">Linux networking and data-plane drivers for NCS 6000 routers</p>
+    <ul>
+      <li>Designed and delivered control-plane LAG member selection for the NCS 6000 router platform.</li>
+      <li>Developed PIM and IGMP features for L3 and L2 multicast forwarding.</li>
+      <li>Maintained and extended the Broadcom (BCM) Linux kernel network driver.</li>
+      <li>Re-architected parts of the NCS 6000 NPU driver software.</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-head">
+      <h3>Firmware Engineer · <span class="co">Hewlett Packard Enterprise</span></h3>
+      <span class="dates">Nov 2014 – Jul 2017</span>
+    </div>
+    <p class="focus">Embedded firmware for the BladeSystem C7000 enclosure manager</p>
+    <ul>
+      <li>Built power-management features for the C7000 enclosure.</li>
+      <li>Extended the Linux I2C client driver for enclosure fans and power supplies, improving fault detection and thermal control.</li>
+      <li>Designed a feature that detects the source of network flooding inside the enclosure.</li>
+      <li>Designed shared-memory transaction logging for the SOAP management server.</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-head">
+      <h3>Software Engineer · <span class="co">Harman Connected Services</span></h3>
+      <span class="dates">Sep 2012 – Oct 2014</span>
+    </div>
+    <p class="focus">Automotive infotainment platform software</p>
+    <ul>
+      <li>Designed a transport-layer protocol for infotainment applications on embedded Linux.</li>
+      <li>Designed and implemented an asynchronous client-server architecture using TAO CORBA in C++.</li>
+      <li>Developed the USB software-update subsystem for in-vehicle head units.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="skills">
+  <h2>Technical skills</h2>
+  <div class="skills">
+    <div class="skill-row"><h3>Languages</h3><div class="chips">
+      <span class="chip hl">C</span><span class="chip">C++</span><span class="chip">Python</span><span class="chip">Bash</span>
+    </div></div>
+    <div class="skill-row"><h3>Kernel &amp; drivers</h3><div class="chips">
+      <span class="chip hl">Linux device drivers</span><span class="chip hl">V4L2</span><span class="chip">Media controller</span><span class="chip hl">MIPI CSI-2</span><span class="chip">I2C</span><span class="chip">USB</span><span class="chip">Char &amp; network drivers</span><span class="chip">Device tree</span><span class="chip">Interrupts</span><span class="chip">DMA</span><span class="chip">Runtime PM, cpufreq, thermal</span>
+    </div></div>
+    <div class="skill-row"><h3>Camera &amp; imaging</h3><div class="chips">
+      <span class="chip hl">ARM Mali-C71AE ISP</span><span class="chip">Sony IMX477</span><span class="chip">Sony IMX568</span><span class="chip">onsemi AR0234</span><span class="chip">OmniVision OG05C10</span><span class="chip">Sensor bring-up</span><span class="chip">IQ tuning</span><span class="chip hl">GStreamer</span>
+    </div></div>
+    <div class="skill-row"><h3>Bring-up &amp; boot</h3><div class="chips">
+      <span class="chip hl">ARM/ARM64 SoC bring-up</span><span class="chip">DDR programming &amp; training</span><span class="chip hl">U-Boot</span><span class="chip">Secure boot</span><span class="chip">ARM TF-A / OP-TEE</span><span class="chip">Post-silicon IP validation</span><span class="chip">Bare-metal</span><span class="chip">OpenAMP</span><span class="chip">remoteproc / RPMsg</span>
+    </div></div>
+    <div class="skill-row"><h3>BSP &amp; build</h3><div class="chips">
+      <span class="chip hl">Yocto / BitBake</span><span class="chip">Debian build systems</span><span class="chip">A/B update with rollback</span><span class="chip">Docker kernel support</span><span class="chip">Cross toolchains</span>
+    </div></div>
+    <div class="skill-row"><h3>Networking</h3><div class="chips">
+      <span class="chip">IGMP</span><span class="chip">PIM</span><span class="chip">LAG</span><span class="chip">NPU drivers (Cisco NCS 6000)</span>
+    </div></div>
+    <div class="skill-row"><h3>Debug &amp; tools</h3><div class="chips">
+      <span class="chip">gdb</span><span class="chip">JTAG</span><span class="chip">ftrace</span><span class="chip">Kernel oops analysis</span><span class="chip">Python test automation</span><span class="chip">AI-assisted dev tools</span><span class="chip">Git</span><span class="chip">Gerrit</span><span class="chip">Jira</span>
+    </div></div>
+  </div>
+</section>
+
+<section id="education">
+  <h2>Education</h2>
+  <div class="edu">
+    <div class="edu-item"><div><b>PG Diploma, Embedded System Design</b><span>CDAC ACTS, Bangalore</span></div><span>2012</span></div>
+    <div class="edu-item"><div><b>B.E., Electronics and Communication</b><span>University of Mumbai</span></div><span>2011</span></div>
+  </div>
+</section>
+
+<footer>
+  © 2026 Nileshkumar Raghuvanshi · <a href="mailto:raghuvanshi.nileshkumar@yahoo.in">raghuvanshi.nileshkumar@yahoo.in</a>
+</footer>
+
+</div>
+</body>
+</html>
