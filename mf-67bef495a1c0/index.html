@@ -196,6 +196,17 @@ nav#views{margin-top:0;border-top:1px solid var(--line)}
     <p class="hint" style="margin-top:10px">Checked after each NSE close. A stock that closes below its 50-day average is named in the project thread so you can decide whether to sell. The 15% trailing stop (15% below the highest close since you bought) is shown for comparison, because the backtest found it the better exit and the 50-day line often sells on normal swings.</p>
   </section>
 
+  <section id="v-daily" data-view="daily" hidden>
+    <div class="note" id="dyNote"></div>
+    <div class="tiles" id="dyTiles"></div>
+    <div class="panel tbl"><h3>On your buy list or bought</h3><p class="hint">Every stock on the Buy list and every stock you hold, with what it did today.</p><div id="dyWatch"></div></div>
+    <div class="chips" id="dyChips" role="group" aria-label="Filter" style="margin-top:20px"></div>
+    <div class="panel tbl" style="margin-top:20px"><h3>Delivery breakouts today</h3><p class="hint">Up 2%+ on 2.5x+ normal volume and 2.5x+ normal delivery, 40%+ of volume taken for delivery, closing near the day's high. Someone large bought for keeps, but the file does not say who.</p><div id="dyBrk"></div></div>
+    <div class="panel tbl" style="margin-top:20px"><h3>Bulk and block deals today</h3><p class="hint">Named buyers and sellers, from NSE. Bulk deals only cover trades of 0.5%+ of a company's shares. Round trips (bought and sold the same day) are trading firms, not investors.</p><div id="dyDeals"></div></div>
+    <div class="panel tbl" style="margin-top:20px"><h3>Steady accumulation</h3><p class="hint">Last 10 days' delivery 1.8x+ the 50 days before, price up 3%+ and above its 50-day average. Weak on its own in the backtest; only worth a look where funds are also buying.</p><div id="dyAcc"></div></div>
+    <div class="panel tbl" style="margin-top:20px"><h3>Did these signals work? Backtest</h3><p class="hint" id="dyBtSub"></p><div id="dyBt"></div><ul class="why" id="dyBtNotes"></ul></div>
+  </section>
+
   <footer><span id="foot"></span> <button type="button" id="lock" class="link">Lock this device</button></footer>
 </div>
 
@@ -486,19 +497,76 @@ function renderHeld() {
     {t: "Return", n: 1, f: r => pct(r.ret), cls: r => sgn(r.ret)},
   ], closed, {empty: "No sales yet."});
 }
-const SPECIAL = {buy: ["Stocks to consider buying", renderBuy], held: ["Stocks you bought", renderHeld]};
+/* ---------- Daily NSE scan ---------- */
+const TAGL = {"bought": ["Bought", "b"], "buylist": ["Buy list", "b"], "funds buying": ["Funds buying", "b"], "funds selling": ["Funds selling", "s"], "fund-held": ["Fund-held", "n"], "new name": ["Not in our funds", "w"]};
+const DYF = [["all", "All"], ["mine", "Buy list + bought"], ["buying", "Funds buying"], ["held", "Fund-held"], ["new", "Not in our funds"]];
+let dyFilter = "all";
+const dyKeep = r => dyFilter === "all" || (dyFilter === "mine" && (r.tags.includes("bought") || r.tags.includes("buylist")))
+  || (dyFilter === "buying" && r.tags.includes("funds buying")) || (dyFilter === "held" && r.tags.includes("fund-held"))
+  || (dyFilter === "new" && r.tags.includes("new name"));
+const tagHtml = r => r.tags.filter(t => t !== "fund-held" || r.tags.length === 1).map(t => `<span class="pill ${TAGL[t][1]}">${TAGL[t][0]}</span>`).join(" ");
+const more = (cols, rows, k, empty) => table(cols, rows.slice(0, k), {empty}) + (rows.length > k ? `<details style="margin-top:8px"><summary class="hint" style="cursor:pointer">Show ${rows.length - k} more</summary>${table(cols, rows.slice(k))}</details>` : "");
+const fundTxt = f => f ? `${f.cat === "mid" ? "Mid" : "Small"} cap ${f.asof}: ${f.b} buying, ${f.s} selling, held by ${f.h}/${f.fc}` : "";
+function renderDaily() {
+  const Y = (ALL.trades || {}).daily;
+  if (!Y) { $("#dyWatch").innerHTML = `<div class="empty">The daily scan has not run yet.</div>`; return; }
+  $("#subtitle").textContent = `NSE end-of-day data for ${Y.asof}${Y.stale ? " (today's files were not out yet)" : ""} · ${Y.scanned} stocks trading Rs 1 cr+ a day · built ${Y.generated}`;
+  const bt = Y.backtest;
+  $("#dyNote").innerHTML = `<p><b>What this is.</b> Each trading evening, NSE's delivery data and bulk and block deals are scanned for signs of big buyers, and matched against the fund data, your Buy list and your holdings. It is faster than the monthly fund portfolios but mostly anonymous.</p>` +
+    (bt ? `<p><b>Backtest verdict.</b> ${esc(bt.verdict)}</p>` : "") + `<p>For your own research, not investment advice.</p>`;
+  const sp = Y.watch.filter(r => r.brk || r.acc).length;
+  const inst = Y.deals.filter(d => !d.roundtrip && d.type === "institution").length;
+  $("#dyTiles").innerHTML = [["Delivery breakouts", Y.breakouts.length, "today"], ["On your lists", sp, "with a breakout or accumulation"],
+    ["Institution deals", inst, "bulk/block, not round trips"], ["Deal history", Y.deal_days, Y.deal_days === 1 ? "day collected so far" : "days collected so far"]]
+    .map(([k, v, n]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${esc(n)}</div></div>`).join("");
+  chips($("#dyChips"), DYF.map(f => f[1]), DYF.find(f => f[0] === dyFilter)[1], l => { dyFilter = DYF.find(f => f[1] === l)[0]; renderDaily(); });
+  const stock = r => `<b>${esc(r.name || r.sym)}</b> ${tagHtml(r)}<div class="sym">${esc(r.sym)}${r.funds ? " · " + esc(fundTxt(r.funds)) : ""}</div>${(r.recent || []).length > 1 ? `<div class="funds">Breakouts in the last 10 sessions: ${esc(r.recent.join(", "))}</div>` : ""}`;
+  const xcol = (t, k) => ({t, n: 1, f: r => r[k] == null ? "–" : fmt(r[k], 1) + "x", cls: r => r[k] >= 2.5 ? "pos" : ""});
+  const pxCols = [
+    {t: "Close", n: 1, f: r => fmt(r.close, 2)},
+    {t: "Day", n: 1, f: r => pct(r.ret), cls: r => sgn(r.ret)},
+    xcol("Volume vs 20d", "volx"), xcol("Delivery vs 20d", "delx"),
+    {t: "Delivery %", n: 1, f: r => r.dpct == null ? "–" : fmt(r.dpct, 0) + "%"},
+    {t: "vs 50-day", n: 1, f: r => pct(r.vs50), cls: r => sgn(r.vs50)},
+    {t: "Rs cr today", n: 1, f: r => fmt(r.turn, 1)}];
+  const wrows = [...Y.watch].sort((a, b) => (b.brk - a.brk) || (b.acc - a.acc) || (b.tags.includes("bought") - a.tags.includes("bought")) || ((b.delx || 0) - (a.delx || 0)));
+  $("#dyWatch").innerHTML = more([{t: "Stock", f: stock},
+    {t: "Today", f: r => r.brk ? `<span class="pill b">Breakout</span>` : r.acc ? `<span class="pill w">Accumulating</span>` : `<span class="pill n">Quiet</span>`},
+    ...pxCols], wrows, 8, "Nothing on your Buy list or holdings traded on NSE today.");
+  $("#dyBrk").innerHTML = table([{t: "Stock", f: stock}, ...pxCols], Y.breakouts.filter(dyKeep), {empty: "No delivery breakouts for this filter today."});
+  $("#dyAcc").innerHTML = more([{t: "Stock", f: stock},
+    {t: "10-day delivery vs before", n: 1, f: r => fmt(r.delx10, 1) + "x"}, {t: "10 days", n: 1, f: r => pct(r.r10), cls: r => sgn(r.r10)},
+    {t: "vs 50-day", n: 1, f: r => pct(r.vs50), cls: r => sgn(r.vs50)}, {t: "Close", n: 1, f: r => fmt(r.close, 2)}],
+    Y.accumulation.filter(dyKeep), 10, "Nothing for this filter today.");
+  const deals = Y.deals.filter(dyKeep), real = deals.filter(d => !d.roundtrip && d.type !== "trading firm");
+  $("#dyDeals").innerHTML = more([
+    {t: "Stock", f: d => `<b>${esc(d.sec_name || d.sym)}</b> ${tagHtml(d)}<div class="sym">${esc(d.sym)} · ${esc(d.kind)}${d.funds ? " · " + esc(fundTxt(d.funds)) : ""}</div>`},
+    {t: "Client", f: d => `${esc(d.client)}<div class="funds">${d.roundtrip ? "round trip" : esc(d.type)}</div>`},
+    {t: "Bought Rs cr", n: 1, f: d => d.bought_cr ? fmt(d.bought_cr, 2) : "–", cls: d => d.bought_cr && !d.roundtrip ? "pos" : ""},
+    {t: "Sold Rs cr", n: 1, f: d => d.sold_cr ? fmt(d.sold_cr, 2) : "–", cls: d => d.sold_cr && !d.roundtrip ? "neg" : ""},
+    {t: "Price", n: 1, f: d => fmt(d.price, 2)}], real.concat(deals.filter(d => !real.includes(d))), Math.max(real.length, 1), "No bulk or block deals for this filter today.");
+  if (bt) {
+    $("#dyBtSub").textContent = `Run ${bt.run}, ${bt.period}. Average excess return after the signal; small samples, so read the direction more than the decimals.`;
+    $("#dyBt").innerHTML = table([{t: "Signal", f: r => esc(r.label)}, {t: "Cases", n: 1, f: r => r.n}, {t: "Months", n: 1, f: r => r.months},
+      {t: "20 days", n: 1, f: r => pct(r.ex20 / 100), cls: r => sgn(r.ex20)}, {t: "% months", n: 1, f: r => r.pos20 + "%"},
+      {t: "60 days", n: 1, f: r => pct(r.ex60 == null ? null : r.ex60 / 100), cls: r => sgn(r.ex60)}, {t: "% months", n: 1, f: r => r.pos60 == null ? "–" : r.pos60 + "%"}], bt.rows);
+    $("#dyBtNotes").innerHTML = bt.notes.map(n => `<li>${esc(n)}</li>`).join("");
+  }
+}
+const SPECIAL = {buy: ["Stocks to consider buying", renderBuy], held: ["Stocks you bought", renderHeld], daily: ["Daily NSE scan", renderDaily]};
 function loadSpecial(cat) {
   curCat = cat; D = null;
   document.querySelectorAll("#cats a").forEach(a => a.setAttribute("aria-current", a.dataset.c === cat ? "page" : "false"));
   $("#views").hidden = true; $("#pending").hidden = true; $("#banner").hidden = true;
   document.querySelectorAll("[data-view]").forEach(s => s.hidden = s.dataset.view !== cat);
   $("#title").textContent = SPECIAL[cat][0];
-  $("#foot").textContent = "Prices: Yahoo Finance daily closes (NSE). Fund data: AMC monthly portfolio disclosures. Not investment advice.";
+  $("#foot").textContent = cat === "daily" ? "Source: NSE archive files (full bhavcopy with delivery, bulk.csv, block.csv). Fund data: AMC monthly portfolio disclosures. Not investment advice."
+    : "Prices: Yahoo Finance daily closes (NSE). Fund data: AMC monthly portfolio disclosures. Not investment advice.";
   SPECIAL[cat][1]();
 }
 
 /* ---------- Category + view routing ---------- */
-const CATS = [["small", "Small cap"], ["mid", "Mid cap"], ["large", "Large cap"], ["buy", "Buy list"], ["held", "Bought"]];
+const CATS = [["small", "Small cap"], ["mid", "Mid cap"], ["large", "Large cap"], ["buy", "Buy list"], ["held", "Bought"], ["daily", "Daily scan"]];
 const views = ["month", "trends", "streaks", "overlap", "pairs", "stock", "status"];
 let ALL = null, curCat = null;
 function load(cat) {
