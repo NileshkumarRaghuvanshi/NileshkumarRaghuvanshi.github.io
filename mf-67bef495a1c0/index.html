@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Private page</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one column ledger, sticky tab bar, tables scroll inside their own box */
+:root{
+  --bg:#f6f7fb; --panel:#ffffff; --ink:#152036; --muted:#5b6478; --line:#dfe3ec;
+  --accent:#1f3864; --accent-soft:#e3e9f5; --buy:#16794a; --buy-soft:#dcf1e5;
+  --sell:#b3261e; --sell-soft:#fbe3e1; --warn:#9a6700;
+  --f-display:"Space Grotesk",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1420; --panel:#171e2d; --ink:#e7ebf3; --muted:#9aa3b6; --line:#2a3346;
+  --accent:#8fb0ec; --accent-soft:#1f2b44; --buy:#5cc98f; --buy-soft:#14301f;
+  --sell:#f08a82; --sell-soft:#3a1a19; --warn:#e3b341; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1420; --panel:#171e2d; --ink:#e7ebf3; --muted:#9aa3b6; --line:#2a3346;
+  --accent:#8fb0ec; --accent-soft:#1f2b44; --buy:#5cc98f; --buy-soft:#14301f;
+  --sell:#f08a82; --sell-soft:#3a1a19; --warn:#e3b341; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
+h1{font-size:1.9rem;letter-spacing:-.01em}
+h2{font-size:1.15rem;margin-bottom:10px}
+.sub{color:var(--muted);margin-top:4px}
+.banner{background:var(--sell-soft);color:var(--sell);border:1px solid var(--sell);padding:8px 12px;border-radius:6px;margin-top:12px;font-weight:600}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--line);margin:16px 0 20px}
+nav a{padding:6px 12px;border-radius:999px;color:var(--muted);text-decoration:none;font-weight:500}
+nav a[aria-current="page"]{background:var(--accent);color:var(--bg)}
+nav a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 16px}
+.chips button{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:5px 10px;border-radius:6px;cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.tile .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.tile .v{font:600 1.5rem var(--f-num);margin-top:2px;font-variant-numeric:tabular-nums}
+.tile .n{color:var(--muted);font-size:13px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:20px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;min-width:0}
+.panel h3{font-size:1rem;margin-bottom:8px}
+.hint{color:var(--muted);font-size:13px;margin:-4px 0 8px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+th[data-k]{cursor:pointer}
+td.n,th.n{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pos{color:var(--buy)} .neg{color:var(--sell)}
+.stock{color:var(--ink);font-weight:500;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;background:none;border:0;padding:0;font:inherit;text-align:left}
+.funds{color:var(--muted);font-size:12.5px}
+.pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.b{background:var(--buy-soft);color:var(--buy)} .pill.s{background:var(--sell-soft);color:var(--sell)}
+.bar{height:8px;background:var(--accent-soft);border-radius:4px;min-width:60px;position:relative}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:4px}
+.heat{text-align:center;font-family:var(--f-num);font-size:12.5px;min-width:34px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+input[type=search],select{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);min-width:0;max-width:100%}
+svg text{fill:var(--muted);font:11px var(--f-num)}
+.empty{color:var(--muted);padding:12px 0}
+footer{margin-top:32px;color:var(--muted);font-size:12.5px}
+
+*{box-sizing:border-box} body{margin:0}
+[hidden]{display:none!important}
+nav.cats{position:static;border-bottom:0;margin:16px 0 0;padding:0;gap:0}
+nav.cats a{border-radius:8px 8px 0 0;padding:8px 18px;font-family:var(--f-display);font-size:1.05rem;border:1px solid transparent;border-bottom:0}
+nav.cats a[aria-current="page"]{background:var(--panel);color:var(--accent);border-color:var(--line)}
+nav#views{margin-top:0;border-top:1px solid var(--line)}
+.link{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit;padding:0}
+.gate{min-height:100vh;display:grid;place-items:center;padding:16px}
+.gate form{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px;width:min(100%,340px);display:grid;gap:12px}
+.gate h1{font-size:1.2rem}
+.gate input[type=password]{font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%}
+.gate button[type=submit]{font:600 15px var(--f-body);padding:9px;border:0;border-radius:6px;background:var(--accent);color:var(--bg);cursor:pointer}
+.gate label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.gate .msg{font-size:13px;color:var(--sell);min-height:1.2em}
+</style></head><body>
+<div class="gate" id="gate"><form id="gateForm" autocomplete="off">
+  <h1>Private page</h1>
+  <input type="password" id="pw" placeholder="Password" aria-label="Password" required>
+  <label><input type="checkbox" id="remember"> Remember on this device</label>
+  <button type="submit">Open</button>
+  <div class="msg" id="gateMsg" role="status"></div>
+</form></div>
+<div class="wrap" id="app" hidden>
+  <header>
+    <h1 id="title"></h1>
+    <div class="sub" id="subtitle"></div>
+    <div class="banner" id="banner" hidden></div>
+  </header>
+  <nav aria-label="Category" id="cats" class="cats"></nav>
+  <nav aria-label="Views" id="views">
+    <a data-v="month">Month by month</a>
+    <a data-v="trends">MoM · QoQ · YoY</a>
+    <a data-v="streaks">Buying streaks</a>
+    <a data-v="overlap">Overlap</a>
+    <a data-v="pairs">Fund vs fund</a>
+    <a data-v="stock">Stock history</a>
+    <a data-v="status">Coverage</a>
+  </nav>
+  <div class="panel empty" id="pending" hidden></div>
+
+  <section id="v-month" data-view="month">
+    <h2>What the funds did each month</h2>
+    <div class="chips" id="monthChips" role="group" aria-label="Month"></div>
+    <div class="tiles" id="monthTiles"></div>
+    <div class="grid2">
+      <div class="panel"><h3>Most bought</h3><p class="hint">Net shares bought across all funds, valued at month-end price</p><div class="tbl" id="mBought"></div></div>
+      <div class="panel"><h3>Most sold</h3><p class="hint">Trimmed or exited, same measure</p><div class="tbl" id="mSold"></div></div>
+      <div class="panel"><h3>New entries</h3><p class="hint">Stocks a fund bought for the first time this month</p><div class="tbl" id="mNew"></div></div>
+      <div class="panel"><h3>Bought more and more</h3><p class="hint">More funds bought than sold for 3+ months running</p><div class="tbl" id="mRun"></div></div>
+    </div>
+  </section>
+
+  <section id="v-trends" data-view="trends" hidden>
+    <h2>Stocks the category is buying</h2>
+    <div class="chips" id="hzChips" role="group" aria-label="Horizon"></div>
+    <p class="hint" id="hzNote"></p>
+    <div class="controls"><input type="search" id="hzSearch" placeholder="Filter stocks or sectors" aria-label="Filter stocks"></div>
+    <div class="panel tbl" id="hzTable"></div>
+    <div class="panel tbl" style="margin-top:20px"><h3>Bought on every horizon</h3><p class="hint">Stocks where more funds bought than sold, and net Rs crore was positive, over one month, one quarter and one year at the same time</p><div id="hzAll"></div></div>
+  </section>
+
+  <section id="v-streaks" data-view="streaks" hidden>
+    <h2>Who keeps buying</h2>
+    <p class="hint">Each cell is the number of consecutive months that fund has bought (green) or sold (red) the stock, up to the as-of month.</p>
+    <div class="controls"><input type="search" id="stSearch" placeholder="Filter stocks" aria-label="Filter streaks"></div>
+    <div class="panel tbl" id="stTable"></div>
+  </section>
+
+  <section id="v-overlap" data-view="overlap" hidden>
+    <h2>Stocks most funds hold</h2>
+    <div class="controls"><input type="search" id="ovSearch" placeholder="Filter stocks or sectors" aria-label="Filter overlap"></div>
+    <div class="panel tbl" id="ovTable"></div>
+  </section>
+
+  <section id="v-pairs" data-view="pairs" hidden>
+    <h2>How much each pair of funds overlaps</h2>
+    <p class="hint">Overlap % adds up, stock by stock, the smaller of the two funds' weights. 100 would mean identical portfolios.</p>
+    <div class="controls"><select id="pwMode" aria-label="Measure"><option value="w">Overlap % by weight</option><option value="n">Number of common stocks</option></select></div>
+    <div class="panel tbl" id="pwTable"></div>
+    <div class="grid2" style="margin-top:20px">
+      <div class="panel"><h3>Most alike</h3><div class="tbl" id="pwTop"></div></div>
+      <div class="panel"><h3>Least alike</h3><div class="tbl" id="pwLow"></div></div>
+    </div>
+  </section>
+
+  <section id="v-status" data-view="status" hidden>
+    <h2>Which funds are in, and where the data came from</h2>
+    <div class="tiles" id="cvTiles"></div>
+    <div class="panel tbl" id="cvTable"></div>
+  </section>
+
+  <section id="v-stock" data-view="stock" hidden>
+    <h2 id="skTitle">Stock history</h2>
+    <div class="controls">
+      <input type="search" id="skSearch" list="skList" placeholder="Type a stock name" aria-label="Choose a stock">
+      <datalist id="skList"></datalist>
+    </div>
+    <div class="grid2">
+      <div class="panel"><h3>Net buying by month (Rs crore)</h3><div id="skNet"></div></div>
+      <div class="panel"><h3>Funds holding it</h3><div id="skHold"></div></div>
+    </div>
+    <div class="panel tbl" style="margin-top:20px"><h3>Weight in each fund (% of NAV)</h3><p class="hint">Green or red = weight up or down vs the month before (includes price moves)</p><div id="skFunds"></div></div>
+  </section>
+
+  <footer><span id="foot"></span> <button type="button" id="lock" class="link">Lock this device</button></footer>
+</div>
+
+
+<script>
+let D = null;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = (v, d=1) => v == null ? "–" : Number(v).toLocaleString("en-IN", {minimumFractionDigits:d, maximumFractionDigits:d});
+const sgn = v => v == null ? "" : v > 0 ? "pos" : v < 0 ? "neg" : "";
+const name = i => (D.names[i] || [i])[0];
+const stockBtn = i => `<button class="stock" data-isin="${esc(i)}">${esc(name(i))}</button>`;
+
+function table(cols, rows, opts={}) {
+  if (!rows.length) return `<div class="empty">${opts.empty || "Nothing this period."}</div>`;
+  const head = cols.map((c, j) => `<th class="${c.n ? "n" : ""}" ${opts.sortable ? `data-k="${j}"` : ""}>${esc(c.t)}</th>`).join("");
+  const body = rows.map(r => "<tr>" + cols.map(c => {
+    const v = c.f(r); return `<td class="${c.n ? "n " : ""}${c.cls ? c.cls(r) : ""}">${v}</td>`; }).join("") + "</tr>").join("");
+  return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+function sortable(el, cols, rows, render) {
+  el.querySelectorAll("th[data-k]").forEach(th => th.onclick = () => {
+    const c = cols[+th.dataset.k]; const dir = th.dataset.dir === "desc" ? 1 : -1;
+    rows.sort((a, b) => { const x = c.v ? c.v(a) : 0, y = c.v ? c.v(b) : 0;
+      return (x > y ? 1 : x < y ? -1 : 0) * dir; });
+    render(rows); el.querySelector(`th[data-k="${th.dataset.k}"]`).dataset.dir = dir === 1 ? "asc" : "desc";
+  });
+}
+
+/* ---------- Month by month ---------- */
+let curMonth = null;
+function chips(el, items, cur, onPick) {
+  el.innerHTML = items.map(m => `<button type="button" aria-pressed="${m === cur}" data-v="${esc(m)}">${esc(m)}</button>`).join("");
+  el.onclick = e => { const b = e.target.closest("button"); if (b) onPick(b.dataset.v); };
+}
+function renderMonth() {
+  chips($("#monthChips"), D.months, curMonth, m => { curMonth = m; renderMonth(); });
+  const rows = D.mbm.filter(r => r.m === curMonth);
+  const bought = rows.filter(r => (r.cr ?? 0) > 0).sort((a, b) => b.cr - a.cr).slice(0, 10);
+  const sold = rows.filter(r => (r.cr ?? 0) < 0).sort((a, b) => a.cr - b.cr).slice(0, 10);
+  const fresh = rows.filter(r => r.nw > 0).sort((a, b) => b.nw - a.nw || (b.cr ?? 0) - (a.cr ?? 0)).slice(0, 15);
+  const runs = rows.filter(r => r.st >= 3).sort((a, b) => b.st - a.st || (b.cr ?? 0) - (a.cr ?? 0)).slice(0, 15);
+  const used = rows.length ? rows[0].fc : 0;
+  const netBuy = rows.reduce((s, r) => s + (r.cr || 0), 0);
+  $("#monthTiles").innerHTML = [
+    ["Funds compared", used, `${curMonth} vs previous month-end`],
+    ["Net buying", fmt(netBuy, 0) + " cr", "all stocks, Rs crore"],
+    ["New positions", rows.reduce((s, r) => s + r.nw, 0), `in ${rows.filter(r => r.nw).length} stocks`],
+    ["Full exits", rows.reduce((s, r) => s + r.ex, 0), `in ${rows.filter(r => r.ex).length} stocks`],
+  ].map(([k, v, n]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${esc(n)}</div></div>`).join("");
+  const flowCols = [
+    {t: "Stock", f: r => stockBtn(r.i) + `<div class="funds">${esc(r.sec || "")}</div>`},
+    {t: "Buying", n: 1, f: r => r.b ? `<span class="pill b">${r.b}</span>` : "0"},
+    {t: "Selling", n: 1, f: r => r.s ? `<span class="pill s">${r.s}</span>` : "0"},
+    {t: "Net Rs cr", n: 1, f: r => fmt(r.cr), cls: r => sgn(r.cr)},
+  ];
+  $("#mBought").innerHTML = table(flowCols, bought);
+  $("#mSold").innerHTML = table(flowCols, sold);
+  $("#mNew").innerHTML = table([
+    {t: "Stock", f: r => stockBtn(r.i)},
+    {t: "Entered by", f: r => `<span class="funds">${esc(r.nf)}</span>`},
+    {t: "Funds now", n: 1, f: r => r.h},
+  ], fresh, {empty: "No fund opened a new position this month."});
+  $("#mRun").innerHTML = table([
+    {t: "Stock", f: r => stockBtn(r.i)},
+    {t: "Months", n: 1, f: r => `<span class="pill b">${r.st}</span>`},
+    {t: "Buying now", f: r => `<span class="funds">${esc([r.nf, r.ab].filter(Boolean).join(", "))}</span>`},
+  ], runs, {empty: "No stock has been net-bought 3 months running yet."});
+}
+
+/* ---------- Horizons ---------- */
+let HZ = [], curHz = null;
+function renderTrends() {
+  chips($("#hzChips"), HZ, curHz, h => { curHz = h; renderTrends(); });
+  const F = D.flows[curHz];
+  $("#hzNote").textContent = `${F.base} month-end compared with ${F.asof}, ${F.used} funds with both months` + (F.missing ? `, ${F.missing} left out` : "") + ".";
+  const q = $("#hzSearch").value.toLowerCase();
+  let rows = F.rows.filter(r => !q || (name(r.i) + " " + (r.sec || "")).toLowerCase().includes(q));
+  const cols = [
+    {t: "Stock", f: r => stockBtn(r.i) + `<div class="funds">${esc(r.sec || "")}</div>`, v: r => name(r.i)},
+    {t: "Held by", n: 1, f: r => r.h, v: r => r.h},
+    {t: "Buying", n: 1, f: r => r.b, v: r => r.b, cls: r => r.b ? "pos" : ""},
+    {t: "New", n: 1, f: r => r.nw, v: r => r.nw},
+    {t: "Selling", n: 1, f: r => r.s, v: r => r.s, cls: r => r.s ? "neg" : ""},
+    {t: "Exits", n: 1, f: r => r.ex, v: r => r.ex},
+    {t: "Net funds", n: 1, f: r => r.nf > 0 ? "+" + r.nf : r.nf, v: r => r.nf, cls: r => sgn(r.nf)},
+    {t: "Net Rs cr", n: 1, f: r => fmt(r.cr), v: r => r.cr ?? -1e18, cls: r => sgn(r.cr)},
+    {t: "Shares %", n: 1, f: r => fmt(r.q), v: r => r.q ?? -1e18, cls: r => sgn(r.q)},
+  ];
+  const el = $("#hzTable");
+  const draw = rs => { el.innerHTML = table(cols, rs.slice(0, 300), {sortable: 1}); sortable(el, cols, rs, draw); };
+  draw(rows);
+}
+$("#hzSearch").oninput = renderTrends;
+
+/* ---------- Streaks ---------- */
+function renderStreaks() {
+  const q = $("#stSearch").value.toLowerCase();
+  const rows = D.streaks.filter(r => !q || name(r.i).toLowerCase().includes(q));
+  const cell = v => {
+    if (v == null) return "";
+    const a = Math.min(Math.abs(v), 6) / 6, c = v > 0 ? "var(--buy)" : "var(--sell)";
+    return `<span style="display:block;border-radius:4px;padding:2px 0;background:color-mix(in srgb, ${c} ${Math.round(18 + a * 60)}%, transparent);color:var(--ink)">${v > 0 ? "+" + v : v}</span>`;
+  };
+  const cols = [
+    {t: "Stock", f: r => stockBtn(r.i), v: r => name(r.i)},
+    {t: "Funds 3+ mo", n: 1, f: r => r.b3, v: r => r.b3},
+    {t: "Buying now", n: 1, f: r => r.bn, v: r => r.bn},
+    {t: "Selling now", n: 1, f: r => r.sn, v: r => r.sn},
+    {t: "Category run", n: 1, f: r => r.cs, v: r => r.cs},
+    ...D.funds.map((f, j) => ({t: f.short, f: r => cell(r.fv[j]), cls: () => "heat", v: r => r.fv[j] ?? 0})),
+  ];
+  const el = $("#stTable");
+  const draw = rs => { el.innerHTML = table(cols, rs.slice(0, 300), {sortable: 1}); sortable(el, cols, rs, draw); };
+  draw(rows);
+}
+$("#stSearch").oninput = renderStreaks;
+
+/* ---------- Overlap ---------- */
+function renderOverlap() {
+  const q = $("#ovSearch").value.toLowerCase();
+  const rows = D.overlap.filter(r => !q || (name(r.i) + " " + (r.sec || "")).toLowerCase().includes(q));
+  const N = D.funds.length;
+  const cols = [
+    {t: "Stock", f: r => stockBtn(r.i) + `<div class="funds">${esc(r.sec || "")}</div>`, v: r => name(r.i)},
+    {t: "Held by", f: r => `<div style="display:flex;gap:8px;align-items:center"><div class="bar"><i style="width:${(r.h / N * 100).toFixed(0)}%"></i></div><span class="n">${r.h}/${N}</span></div>`, v: r => r.h},
+    {t: "Avg weight %", n: 1, f: r => fmt(r.aw, 2), v: r => r.aw ?? 0},
+    {t: "Max weight %", n: 1, f: r => fmt(r.mw, 2), v: r => r.mw ?? 0},
+    {t: "MF holding Rs cr", n: 1, f: r => fmt(r.cr, 0), v: r => r.cr ?? 0},
+  ];
+  const el = $("#ovTable");
+  const draw = rs => { el.innerHTML = table(cols, rs.slice(0, 300), {sortable: 1}); sortable(el, cols, rs, draw); };
+  draw(rows);
+}
+$("#ovSearch").oninput = renderOverlap;
+
+/* ---------- Stock history ---------- */
+let byName = {}, curStock = null;
+function barChart(vals, labels, opts={}) {
+  const W = 520, H = 200, L = 48, B = 34, T = 10, R = 8;
+  const nums = vals.map(v => v ?? 0);
+  const lo = Math.min(0, ...nums), hi = Math.max(0, ...nums, opts.min || 0);
+  const span = hi - lo || 1, y = v => T + (hi - v) / span * (H - T - B);
+  const bw = (W - L - R) / Math.max(nums.length, 1);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || "")}" style="width:100%;height:auto">`;
+  [...new Set([hi, 0, lo])].forEach(t => { s += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${fmt(t, opts.d ?? 0)}</text>`; });
+  nums.forEach((v, j) => {
+    const x = L + j * bw + bw * 0.15, top = Math.min(y(v), y(0)), h = Math.max(Math.abs(y(v) - y(0)), vals[j] == null ? 0 : 1);
+    const fill = opts.fill || (v >= 0 ? "var(--buy)" : "var(--sell)");
+    s += `<rect x="${x}" y="${top}" width="${bw * 0.7}" height="${h}" fill="${fill}" rx="2"><title>${esc(labels[j])}: ${vals[j] == null ? "no data" : fmt(v, opts.d ?? 1)}</title></rect>`;
+    const step = Math.ceil(nums.length / 7);
+    if ((j % step === 0 && nums.length - 1 - j >= step / 2) || j === nums.length - 1)
+      s += `<text x="${x + bw * 0.35}" y="${H - 12}" text-anchor="middle">${esc(labels[j].replace("-20", " '"))}</text>`;
+  });
+  return s + "</svg>";
+}
+function renderStock() {
+  const i = curStock; if (!i || !D.series[i]) { $("#skNet").innerHTML = `<div class="empty">Pick a stock.</div>`; return; }
+  const S = D.series[i];
+  $("#skTitle").textContent = name(i);
+  $("#skSearch").value = name(i);
+  $("#skNet").innerHTML = barChart(S.net, D.seriesMonths, {label: "Net buying by month", d: 1});
+  $("#skHold").innerHTML = barChart(S.hold, D.seriesMonths, {label: "Funds holding", fill: "var(--accent)", d: 0, min: 1});
+  const rows = D.funds.map((f, j) => ({f, w: S.w[j]})).filter(r => r.w.some(v => v != null));
+  rows.sort((a, b) => (b.w[b.w.length - 1] ?? -1) - (a.w[a.w.length - 1] ?? -1));
+  const ms = D.seriesMonths.slice(-8);
+  const off = D.seriesMonths.length - ms.length;
+  $("#skFunds").innerHTML = table([
+    {t: "Fund", f: r => esc(r.f.label)},
+    ...ms.map((m, k) => ({t: m, n: 1, f: r => fmt(r.w[off + k], 2),
+      cls: r => { const a = r.w[off + k], b = r.w[off + k - 1]; return a == null || b == null ? "" : sgn(a - b); }})),
+  ], rows, {empty: "No fund held this stock in the loaded months."});
+}
+$("#skSearch").onchange = e => { const i = byName[e.target.value.toLowerCase()]; if (i) { curStock = i; renderStock(); } };
+document.addEventListener("click", e => {
+  const b = e.target.closest(".stock"); if (!b) return;
+  curStock = b.dataset.isin; location.hash = curCat + "/stock"; renderStock();
+});
+
+
+/* ---------- Fund vs fund ---------- */
+function renderPairs() {
+  const P = D.pairs, F = D.funds, el = $("#pwTable");
+  if (!P) { el.innerHTML = `<div class="empty">Not available.</div>`; return; }
+  const mode = $("#pwMode").value, M = mode === "n" ? P.n : P.w;
+  const max = Math.max(1, ...M.flatMap((r, a) => r.filter((_, b) => a !== b)));
+  let h = `<table><thead><tr><th>Fund</th>${F.map(f => `<th class="n" title="${esc(f.label)}">${esc(f.short)}</th>`).join("")}</tr></thead><tbody>`;
+  F.forEach((f, a) => { h += `<tr><td style="white-space:nowrap">${esc(f.label)}</td>` + F.map((_, b) => {
+    if (a === b) return `<td class="heat" style="color:var(--muted)">·</td>`;
+    const v = M[a][b] ?? 0, k = Math.round(8 + v / max * 70);
+    return `<td class="heat"><span style="display:block;border-radius:4px;padding:2px 3px;background:color-mix(in srgb, var(--accent) ${k}%, transparent)">${mode === "n" ? v : fmt(v, 0)}</span></td>`; }).join("") + "</tr>"; });
+  el.innerHTML = h + "</tbody></table>";
+  const pairs = [];
+  F.forEach((f, a) => F.forEach((g, b) => { if (a < b) pairs.push({a: f.label, b: g.label, w: P.w[a][b], n: P.n[a][b]}); }));
+  pairs.sort((x, y) => (y.w ?? 0) - (x.w ?? 0));
+  const cols = [{t: "Fund A", f: r => esc(r.a)}, {t: "Fund B", f: r => esc(r.b)},
+    {t: "Overlap %", n: 1, f: r => fmt(r.w, 1)}, {t: "Common stocks", n: 1, f: r => r.n}];
+  $("#pwTop").innerHTML = table(cols, pairs.slice(0, 12));
+  $("#pwLow").innerHTML = table(cols, pairs.slice(-12).reverse());
+}
+$("#pwMode").onchange = renderPairs;
+
+/* ---------- Every-horizon accumulation ---------- */
+function renderAccum() {
+  const keys = Object.keys(D.flows), el = $("#hzAll");
+  const by = {}; keys.forEach(k => D.flows[k].rows.forEach(r => (by[r.i] = by[r.i] || {})[k] = r));
+  const rows = Object.entries(by).filter(([i, o]) => keys.every(k => o[k] && o[k].nf > 0 && (o[k].cr ?? 0) > 0))
+    .map(([i, o]) => ({i, o})).sort((x, y) => (y.o[keys[1] || keys[0]].nf - x.o[keys[1] || keys[0]].nf) || ((y.o[keys[0]].cr ?? 0) - (x.o[keys[0]].cr ?? 0)));
+  el.innerHTML = table([
+    {t: "Stock", f: r => stockBtn(r.i) + `<div class="funds">${esc((D.names[r.i] || [])[1] || "")}</div>`},
+    {t: "Held by", n: 1, f: r => r.o[keys[0]].h},
+    ...keys.flatMap(k => [{t: k + " net funds", n: 1, f: r => "+" + r.o[k].nf, cls: () => "pos"},
+                          {t: k + " Rs cr", n: 1, f: r => fmt(r.o[k].cr, 0), cls: () => "pos"}]),
+  ], rows.slice(0, 40), {empty: "No stock is being net-bought on every horizon."});
+}
+
+/* ---------- Coverage ---------- */
+function renderStatus() {
+  const S = D.status || [];
+  const ok = S.filter(r => r.state === "ok").length, part = S.filter(r => r.state === "partial").length, bad = S.filter(r => r.state === "failed").length;
+  $("#cvTiles").innerHTML = [["Funds in category", S.length, "from AMFI's scheme list"], ["Full history", ok, "from the AMC's own files"],
+    ["Partial", part, "fewer months or fallback source"], ["No data", bad, "could not be fetched"]]
+    .map(([k, v, n]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${esc(n)}</div></div>`).join("");
+  const pill = r => r.state === "ok" ? `<span class="pill b">OK</span>` : r.state === "partial" ? `<span class="pill" style="background:var(--accent-soft);color:var(--warn)">Partial</span>` : `<span class="pill s">Failed</span>`;
+  $("#cvTable").innerHTML = table([
+    {t: "Fund", f: r => esc(r.scheme || r.fund)}, {t: "Status", f: pill},
+    {t: "Months", n: 1, f: r => r.months}, {t: "Range", f: r => esc(r.range || "–")},
+    {t: "Source", f: r => esc(r.source || "–")},
+    {t: "Note", f: r => `<span class="funds">${esc(r.note || "")}</span>`},
+  ], S, {empty: "No status recorded."});
+}
+
+/* ---------- Category + view routing ---------- */
+const CATS = [["small", "Small cap"], ["mid", "Mid cap"], ["large", "Large cap"]];
+const views = ["month", "trends", "streaks", "overlap", "pairs", "stock", "status"];
+let ALL = null, curCat = null;
+function load(cat) {
+  curCat = cat; D = ALL.categories[cat] || null;
+  document.querySelectorAll("#cats a").forEach(a => a.setAttribute("aria-current", a.dataset.c === cat ? "page" : "false"));
+  document.querySelectorAll("#views a").forEach(a => a.setAttribute("href", "#" + cat + "/" + a.dataset.v));
+  const has = !!(D && D.funds);
+  $("#views").hidden = !has; $("#pending").hidden = has;
+  if (!has) {
+    document.querySelectorAll("[data-view]").forEach(s => s.hidden = true);
+    $("#title").textContent = CATS.find(c => c[0] === cat)[1] + " funds";
+    $("#subtitle").textContent = ""; $("#banner").hidden = true; $("#foot").textContent = "";
+    $("#pending").textContent = (D && D.note) || "This category has not been run yet.";
+    return false;
+  }
+  $("#title").textContent = D.title;
+  $("#subtitle").textContent = `${D.funds.length} funds · as of ${D.asof} month-end · built ${D.generated}`;
+  $("#banner").hidden = !D.banner; if (D.banner) $("#banner").textContent = D.banner;
+  $("#foot").innerHTML = `Source: each AMC's monthly portfolio disclosure (equity holdings only); see Coverage for the funds that use a fallback source. Buying and selling are measured in shares, so price moves do not count. Not investment advice.`;
+  curMonth = D.months[0]; HZ = Object.keys(D.flows); curHz = HZ[0];
+  $("#skList").innerHTML = Object.keys(D.series).map(i => `<option value="${esc(name(i))}">`).join("");
+  byName = Object.fromEntries(Object.keys(D.series).map(i => [name(i).toLowerCase(), i]));
+  curStock = (D.overlap[0] || {}).i;
+  ["#hzSearch", "#stSearch", "#ovSearch"].forEach(s => $(s).value = "");
+  renderMonth(); renderTrends(); renderAccum(); renderStreaks(); renderOverlap(); renderPairs(); renderStock(); renderStatus();
+  return true;
+}
+function route() {
+  let [c, v] = location.hash.slice(1).split("/");
+  if (!CATS.some(x => x[0] === c)) c = curCat || (CATS.find(x => (ALL.categories[x[0]] || {}).funds) || CATS[1])[0];
+  if (!views.includes(v)) v = "month";
+  if (c !== curCat) { if (!load(c)) return; }
+  if (!D || !D.funds) return;
+  document.querySelectorAll("[data-view]").forEach(s => s.hidden = s.dataset.view !== v);
+  document.querySelectorAll("#views a").forEach(a => a.setAttribute("aria-current", a.dataset.v === v ? "page" : "false"));
+}
+function start(all) {
+  ALL = all;
+  $("#cats").innerHTML = CATS.map(([k, l]) => `<a href="#${k}/month" data-c="${k}">${l}${(all.categories[k] || {}).funds ? "" : " ·"}</a>`).join("");
+  $("#gate").hidden = true; $("#app").hidden = false;
+  window.addEventListener("hashchange", route); route();
+}
+
+/* ---------- Unlock ---------- */
+const K = {"salt": "Z0L4EFB40YEzQgHiWgsH+g==", "iter": 600000, "iv": "/rftd20cteT4NMF+", "priv": "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"};
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const toB64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+async function derive(pw) {
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]);
+  return crypto.subtle.deriveBits({name: "PBKDF2", salt: b64(K.salt), iterations: K.iter, hash: "SHA-256"}, base, 256);
+}
+async function openWith(bits) {
+  const kek = await crypto.subtle.importKey("raw", bits, "AES-GCM", false, ["decrypt"]);
+  const pkcs8 = await crypto.subtle.decrypt({name: "AES-GCM", iv: b64(K.iv)}, kek, b64(K.priv));
+  const priv = await crypto.subtle.importKey("pkcs8", pkcs8, {name: "RSA-OAEP", hash: "SHA-256"}, false, ["decrypt"]);
+  const res = await fetch("data.bin?t=" + Date.now(), {cache: "no-store"});
+  if (!res.ok) throw new Error("data");
+  const buf = new Uint8Array(await res.arrayBuffer());
+  const n = (buf[0] << 8) | buf[1], ek = buf.slice(2, 2 + n), iv = buf.slice(2 + n, 14 + n), ct = buf.slice(14 + n);
+  const dk = await crypto.subtle.decrypt({name: "RSA-OAEP"}, priv, ek);
+  const aes = await crypto.subtle.importKey("raw", dk, "AES-GCM", false, ["decrypt"]);
+  const gz = await crypto.subtle.decrypt({name: "AES-GCM", iv}, aes, ct);
+  const text = await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+  return JSON.parse(text);
+}
+const LS = "mf-key-v1";
+$("#gateForm").onsubmit = async e => {
+  e.preventDefault(); const msg = $("#gateMsg"); msg.textContent = "Unlocking…";
+  try {
+    const bits = await derive($("#pw").value);
+    const all = await openWith(bits);
+    try { if ($("#remember").checked) localStorage.setItem(LS, toB64(bits)); } catch (_) {}
+    start(all);
+  } catch (err) { msg.textContent = err.message === "data" ? "Could not load the data file. Try again." : "Wrong password."; }
+};
+$("#lock").onclick = () => { try { localStorage.removeItem(LS); } catch (_) {} location.reload(); };
+(async () => {
+  let saved = null; try { saved = localStorage.getItem(LS); } catch (_) {}
+  if (saved) { try { start(await openWith(b64(saved).buffer)); return; } catch (_) { try { localStorage.removeItem(LS); } catch (_) {} } }
+  $("#pw").focus();
+})();
+</script>
+</body></html>
