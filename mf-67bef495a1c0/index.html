@@ -81,6 +81,12 @@ nav#views{margin-top:0;border-top:1px solid var(--line)}
 .gate input[type=password]{font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%}
 .gate button[type=submit]{font:600 15px var(--f-body);padding:9px;border:0;border-radius:6px;background:var(--accent);color:var(--bg);cursor:pointer}
 .gate label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.pill.w{background:var(--accent-soft);color:var(--warn)} .pill.n{background:var(--accent-soft);color:var(--muted)}
+.why{font-size:12.5px;color:var(--muted);margin:2px 0 0;padding-left:16px}
+.why li.f{color:var(--warn)}
+.sym{color:var(--muted);font:12px var(--f-num)}
+.note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:6px;padding:10px 14px;margin:0 0 16px;font-size:14px}
+.note p{margin:4px 0}
 .gate .msg{font-size:13px;color:var(--sell);min-height:1.2em}
 </style></head><body>
 <div class="gate" id="gate"><form id="gateForm" autocomplete="off">
@@ -170,6 +176,24 @@ nav#views{margin-top:0;border-top:1px solid var(--line)}
       <div class="panel"><h3>Funds holding it</h3><div id="skHold"></div></div>
     </div>
     <div class="panel tbl" style="margin-top:20px"><h3>Weight in each fund (% of NAV)</h3><p class="hint">Green or red = weight up or down vs the month before (includes price moves)</p><div id="skFunds"></div></div>
+  </section>
+
+  <section id="v-buy" data-view="buy" hidden>
+    <div class="note">
+      <p><b>How this list is made.</b> From the latest month of fund portfolios, using the rules the backtest supported: the 15 stocks with the most funds net buying (buyers minus sellers), plus any stock that 2 or more fund houses bought for the first time. A <b>Candidate</b> is also in a price uptrend (above its 200-day average and higher than 3 months ago) and above its 50-day average. <b>Caution</b>: a mid cap the funds have been buying 3+ months running, which did worse in the backtest. <b>Check</b>: listed too recently to test the trend. <b>Wait</b>: not in an uptrend yet, or below its 50-day average.</p>
+      <p>The backtest's edge came from holding several of these together, not from any single pick, and from selling on price (a 15% to 20% trailing stop did best). These are candidates from this analysis for your own research, not investment advice.</p>
+    </div>
+    <div class="chips" id="buyChips" role="group" aria-label="Category"></div>
+    <div class="tiles" id="buyTiles"></div>
+    <div class="panel tbl" id="buyTable"></div>
+    <p class="hint" id="buyFoot" style="margin-top:10px"></p>
+  </section>
+
+  <section id="v-held" data-view="held" hidden>
+    <div class="tiles" id="heldTiles"></div>
+    <div class="panel tbl" id="heldTable"></div>
+    <div class="panel tbl" style="margin-top:20px"><h3>Sold</h3><div id="closedTable"></div></div>
+    <p class="hint" style="margin-top:10px">Checked after each NSE close. A stock that closes below its 50-day average is named in the project thread so you can decide whether to sell. The 15% trailing stop (15% below the highest close since you bought) is shown for comparison, because the backtest found it the better exit and the 50-day line often sells on normal swings.</p>
   </section>
 
   <footer><span id="foot"></span> <button type="button" id="lock" class="link">Lock this device</button></footer>
@@ -404,8 +428,77 @@ function renderStatus() {
   ], S, {empty: "No status recorded."});
 }
 
+
+/* ---------- Buy list and bought stocks ---------- */
+const pct = (v, d=1) => v == null ? "–" : (v > 0 ? "+" : "") + fmt(v * 100, d) + "%";
+const VERD = {buy: ["Candidate", "b"], caution: ["Caution", "w"], check: ["Check", "n"], wait: ["Wait", "s"]};
+let buyCat = null;
+function renderBuy() {
+  const B = (ALL.trades || {}).buylist;
+  if (!B) { $("#buyTable").innerHTML = `<div class="empty">The buy list has not been built yet.</div>`; return; }
+  const ks = Object.keys(B.cats); buyCat = buyCat && ks.includes(buyCat) ? buyCat : ks[0];
+  chips($("#buyChips"), ks.map(k => B.cats[k].label), B.cats[buyCat].label, l => { buyCat = ks.find(k => B.cats[k].label === l); renderBuy(); });
+  const C = B.cats[buyCat], rows = C.rows;
+  $("#subtitle").textContent = `From ${C.asof} portfolios of ${C.funds} funds with two months of data · prices as of ${(rows.find(r => r.px) || {px: {}}).px.asof || "–"} · built ${B.generated}`;
+  const cnt = v => rows.filter(r => r.verdict === v).length;
+  $("#buyTiles").innerHTML = [["Candidates", cnt("buy"), "signal + uptrend + above 50-day"], ["Caution", cnt("caution"), "bought 3+ months running"],
+    ["Check", cnt("check"), "new listings, no trend yet"], ["Wait", cnt("wait"), "signal but no uptrend"]]
+    .map(([k, v, n]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${esc(n)}</div></div>`).join("");
+  $("#buyTable").innerHTML = table([
+    {t: "Stock", f: r => `<b>${esc(r.name)}</b>${r.held ? ` <span class="pill b">Bought</span>` : ""}<div class="sym">${esc((r.sym || "").replace(/\.(NS|BO)$/, ""))} · ${esc(r.sec || "")}</div>
+      <ul class="why">${r.why.map(w => `<li>${esc(w)}</li>`).join("")}${r.flags.map(w => `<li class="f">${esc(w)}</li>`).join("")}</ul>`},
+    {t: "Status", f: r => `<span class="pill ${VERD[r.verdict][1]}">${VERD[r.verdict][0]}</span>`},
+    {t: "Net funds", n: 1, f: r => "+" + r.net, cls: () => "pos"},
+    {t: "New", n: 1, f: r => r.nw},
+    {t: "Held by", n: 1, f: r => `${r.h}/${r.fc}`},
+    {t: "Net Rs cr", n: 1, f: r => fmt(r.cr, 0), cls: r => sgn(r.cr)},
+    {t: "Close", n: 1, f: r => r.px ? fmt(r.px.close, 2) : "–"},
+    {t: "vs 50-day", n: 1, f: r => pct(r.px && r.px.vs50), cls: r => sgn(r.px && r.px.vs50)},
+    {t: "vs 200-day", n: 1, f: r => pct(r.px && r.px.vs200, 0), cls: r => sgn(r.px && r.px.vs200)},
+    {t: "3 months", n: 1, f: r => pct(r.px && r.px.r63, 0), cls: r => sgn(r.px && r.px.r63)},
+  ], rows, {empty: "No candidates this month."});
+  $("#buyFoot").textContent = (C.dropped || []).length ? "Left out: " + C.dropped.map(d => `${d.name} (${d.why})`).join("; ") + "." : "";
+}
+function renderHeld() {
+  const H = (ALL.trades || {}).holdings || {rows: [], closed: []};
+  const rows = H.rows || [], closed = H.closed || [];
+  $("#subtitle").textContent = H.updated ? `Prices as of the last NSE close · updated ${H.updated}` : "Nothing bought yet";
+  const below = rows.filter(r => r.below50).length, rets = rows.filter(r => r.ret != null);
+  $("#heldTiles").innerHTML = [["Holding", rows.length, "stocks"], ["Below 50-day avg", below, below ? "sell signal you asked for" : "none"],
+    ["Average return", rets.length ? pct(rets.reduce((s, r) => s + r.ret, 0) / rets.length) : "–", "since you bought"],
+    ["Sold", closed.length, "closed trades"]]
+    .map(([k, v, n]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${esc(n)}</div></div>`).join("");
+  $("#heldTable").innerHTML = table([
+    {t: "Stock", f: r => `<b>${esc(r.name)}</b><div class="sym">${esc((r.sym || "").replace(/\.(NS|BO)$/, ""))} · ${esc(r.sec || "")}</div>${r.note ? `<div class="funds">${esc(r.note)}</div>` : ""}`},
+    {t: "50-day check", f: r => !r.px ? `<span class="pill n">No price</span>` : r.below50 ? `<span class="pill s">Below</span>` : `<span class="pill b">Above</span>`},
+    {t: "Bought", n: 1, f: r => `${fmt(r.buy_price, 2)}<div class="funds">${esc(r.buy_date)}${r.qty ? " · " + fmt(r.qty, 0) + " sh" : ""}</div>`},
+    {t: "Close", n: 1, f: r => r.px ? `${fmt(r.px.close, 2)}<div class="funds">${esc(r.px.asof)}</div>` : "–"},
+    {t: "Return", n: 1, f: r => pct(r.ret), cls: r => sgn(r.ret)},
+    {t: "50-day avg", n: 1, f: r => r.px ? fmt(r.px.dma50, 2) : "–"},
+    {t: "vs 50-day", n: 1, f: r => pct(r.px && r.px.vs50), cls: r => sgn(r.px && r.px.vs50)},
+    {t: "15% stop", n: 1, f: r => r.stop15 != null ? `${fmt(r.stop15, 2)}<div class="funds">peak ${fmt(r.peak, 2)}</div>` : "–"},
+    {t: "Room to stop", n: 1, f: r => pct(r.to_stop), cls: r => r.below_stop ? "neg" : ""},
+  ], rows, {empty: "Nothing bought yet. When you buy, say so in the project thread (stock, price, date) and it will appear here."});
+  $("#closedTable").innerHTML = table([
+    {t: "Stock", f: r => esc(r.name)},
+    {t: "Bought", n: 1, f: r => `${fmt(r.buy_price, 2)}<div class="funds">${esc(r.buy_date)}</div>`},
+    {t: "Sold", n: 1, f: r => `${fmt(r.sell_price, 2)}<div class="funds">${esc(r.sell_date)}</div>`},
+    {t: "Return", n: 1, f: r => pct(r.ret), cls: r => sgn(r.ret)},
+  ], closed, {empty: "No sales yet."});
+}
+const SPECIAL = {buy: ["Stocks to consider buying", renderBuy], held: ["Stocks you bought", renderHeld]};
+function loadSpecial(cat) {
+  curCat = cat; D = null;
+  document.querySelectorAll("#cats a").forEach(a => a.setAttribute("aria-current", a.dataset.c === cat ? "page" : "false"));
+  $("#views").hidden = true; $("#pending").hidden = true; $("#banner").hidden = true;
+  document.querySelectorAll("[data-view]").forEach(s => s.hidden = s.dataset.view !== cat);
+  $("#title").textContent = SPECIAL[cat][0];
+  $("#foot").textContent = "Prices: Yahoo Finance daily closes (NSE). Fund data: AMC monthly portfolio disclosures. Not investment advice.";
+  SPECIAL[cat][1]();
+}
+
 /* ---------- Category + view routing ---------- */
-const CATS = [["small", "Small cap"], ["mid", "Mid cap"], ["large", "Large cap"]];
+const CATS = [["small", "Small cap"], ["mid", "Mid cap"], ["large", "Large cap"], ["buy", "Buy list"], ["held", "Bought"]];
 const views = ["month", "trends", "streaks", "overlap", "pairs", "stock", "status"];
 let ALL = null, curCat = null;
 function load(cat) {
@@ -436,6 +529,7 @@ function load(cat) {
 function route() {
   let [c, v] = location.hash.slice(1).split("/");
   if (!CATS.some(x => x[0] === c)) c = curCat || (CATS.find(x => (ALL.categories[x[0]] || {}).funds) || CATS[1])[0];
+  if (SPECIAL[c]) { loadSpecial(c); return; }
   if (!views.includes(v)) v = "month";
   if (c !== curCat) { if (!load(c)) return; }
   if (!D || !D.funds) return;
@@ -444,7 +538,7 @@ function route() {
 }
 function start(all) {
   ALL = all;
-  $("#cats").innerHTML = CATS.map(([k, l]) => `<a href="#${k}/month" data-c="${k}">${l}${(all.categories[k] || {}).funds ? "" : " ·"}</a>`).join("");
+  $("#cats").innerHTML = CATS.map(([k, l]) => `<a href="#${k}${SPECIAL[k] ? "" : "/month"}" data-c="${k}">${l}${SPECIAL[k] || (all.categories[k] || {}).funds ? "" : " ·"}</a>`).join("");
   $("#gate").hidden = true; $("#app").hidden = false;
   window.addEventListener("hashchange", route); route();
 }
